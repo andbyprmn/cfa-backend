@@ -31,7 +31,9 @@ func (h *userHandler) RegisterUser(c *gin.Context) {
 
 	newUser, err := h.userService.RegisterUser(input)
 	if err != nil {
-		response := helper.APIResponse("Registered account failed!", http.StatusBadRequest, "error", nil)
+		errorMessage := gin.H{"errors": err.Error()}
+
+		response := helper.APIResponse("Registered account failed!", http.StatusBadRequest, "error", errorMessage)
 		c.JSON(http.StatusBadRequest, response)
 		return
 	}
@@ -43,4 +45,34 @@ func (h *userHandler) RegisterUser(c *gin.Context) {
 	response := helper.APIResponse("Account has been registered", http.StatusOK, "success", formatter)
 
 	c.JSON(http.StatusOK, response)
+}
+
+func (h *userHandler) Login(c *gin.Context) {
+	var input user.LoginInput
+
+	err := c.ShouldBindJSON(&input)
+	if err != nil {
+		errors := helper.FormatValidationError(err)
+		errorMessage := gin.H{"errors": errors}
+
+		response := helper.APIResponse("Login failed!", http.StatusUnprocessableEntity, "error", errorMessage)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	loggedinUser, err := h.userService.Login(input)
+	if err != nil {
+		errorMessage := gin.H{"errors": err.Error()}
+
+		response := helper.APIResponse("Login failed!", http.StatusBadRequest, "error", errorMessage)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	formatter := user.FormatUser(loggedinUser, "tokenLogin")
+
+	response := helper.APIResponse("Successfuly logged in!", http.StatusOK, "success", formatter)
+
+	c.JSON(http.StatusOK, response)
+
 }
