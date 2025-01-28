@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cfa-backend/auth"
 	"cfa-backend/handler"
 	"cfa-backend/user"
 	"log"
@@ -21,8 +22,9 @@ func main() {
 
 	userRepository := user.NewRepository(db)
 	userService := user.NewService(userRepository)
+	authService := auth.NewService()
 
-	userHandler := handler.NewUserHandler(userService)
+	userHandler := handler.NewUserHandler(userService, authService)
 
 	router := gin.Default()
 	api := router.Group("/api/v1")
