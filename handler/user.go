@@ -19,6 +19,17 @@ func NewUserHandler(userService user.Service, authService auth.Service) *userHan
 	return &userHandler{userService: userService, authService: authService}
 }
 
+// RegisterUser godoc
+// @Summary      Register a new user
+// @Description  This endpoint registers a new user
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Param        body  body  user.RegisterUserInput  true  "User data"
+// @Success      200   {object}  user.UserFormatter
+// @Failure      400   {object}  helper.Response
+// @Failure      422   {object}  helper.Response
+// @Router       /users [post]
 func (h *userHandler) RegisterUser(c *gin.Context) {
 	var input user.RegisterUserInput
 
@@ -57,6 +68,17 @@ func (h *userHandler) RegisterUser(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// LoginUser godoc
+// @Summary      Login an user
+// @Description  This endpoint login an users
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Param        body  body  user.LoginInput  true  "User login data"
+// @Success      200   {object}  user.UserFormatter
+// @Failure      400   {object}  helper.Response
+// @Failure      422   {object}  helper.Response
+// @Router       /sessions [post]
 func (h *userHandler) Login(c *gin.Context) {
 	var input user.LoginInput
 
@@ -96,6 +118,17 @@ func (h *userHandler) Login(c *gin.Context) {
 
 }
 
+// CheckEmailAvailabilityRegister godoc
+// @Summary      Check email availability register a new user
+// @Description  This endpoint check email availability register a new user
+// @Tags         Users
+// @Accept       json
+// @Produce      json
+// @Param        body  body  user.CheckEmailInput  true  "Email availability register"
+// @Success      200   {object}  user.UserFormatter
+// @Failure      400   {object}  helper.Response
+// @Failure      422   {object}  helper.Response
+// @Router       /email_checkers [post]
 func (h *userHandler) CheckEmailAvailability(c *gin.Context) {
 	var input user.CheckEmailInput
 
@@ -135,6 +168,17 @@ func (h *userHandler) CheckEmailAvailability(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// UploadAvatar godoc
+// @Summary      Upload user avatar
+// @Description  Upload a new avatar for the user
+// @Tags         Users
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        avatar  formData  file  true  "Avatar image file"
+// @Success      200   {object}  helper.Response
+// @Failure      400   {object}  helper.Response
+// @Failure      422   {object}  helper.Response
+// @Router       /avatars [post]
 func (h *userHandler) UploadAvatar(c *gin.Context) {
 	file, err := c.FormFile("avatar")
 	if err != nil {

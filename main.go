@@ -2,19 +2,39 @@ package main
 
 import (
 	"cfa-backend/auth"
+	"cfa-backend/campaign"
 	"cfa-backend/handler"
 	"cfa-backend/helper"
 	"cfa-backend/user"
+	"fmt"
 	"log"
 	"net/http"
 	"strings"
 
+	_ "cfa-backend/docs" // Import dokumentasi Swagger yang dihasilkan
+
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
+// @title           CFA Backend API
+// @version         1.0
+// @description     API documentation for CFA Backend.
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.url    http://www.swagger.io/support
+// @contact.email  support@swagger.io
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host      localhost:8080
+// @BasePath  /
 func main() {
 	// refer https://github.com/go-sql-driver/mysql#dsn-data-source-name for details
 	dsn := "root:@tcp(127.0.0.1:3307)/crowdfunding?charset=utf8mb4&parseTime=True&loc=Local"
@@ -24,19 +44,36 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
+	//Init Repositories
 	userRepository := user.NewRepository(db)
+	campaignRepository := campaign.NewRepository(db)
+
+	//Init Services
 	userService := user.NewService(userRepository)
 	authService := auth.NewService()
+	campaignService := campaign.NewService(campaignRepository)
 
+	//Init Handlers
 	userHandler := handler.NewUserHandler(userService, authService)
+	campaignHandler := handler.NewCampaignHandler(campaignService)
+
+	fmt.Println("===================================== START DEBUG =====================================")
+
+	fmt.Println("====================================== END DEBUG ======================================")
 
 	router := gin.Default()
+	router.Static("/images", "./images")
 	api := router.Group("/api/v1")
+
+	// Swagger Docs Endpoint
+	api.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	api.POST("/users", userHandler.RegisterUser)
 	api.POST("/sessions", userHandler.Login)
 	api.POST("/email_checkers", userHandler.CheckEmailAvailability)
 	api.POST("/avatars", authMiddleware(authService, userService), userHandler.UploadAvatar)
+
+	api.GET("/campaigns", campaignHandler.GetCampaigns)
 
 	router.Run()
 }
