@@ -48,6 +48,17 @@ func (h *campaignHandler) GetCampaigns(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// UploadAvatar godoc
+// @Summary      Get detail of campaign
+// @Description  Get detail of campaign by campaign id
+// @Tags         Campaigns
+// @Accept       json
+// @Produce      json
+// @Param        id query int false "Campaign ID"
+// @Success      200   {object}  helper.Response
+// @Failure      400   {object}  helper.Response
+// @Failure      422   {object}  helper.Response
+// @Router       /campaigns/:id [get]
 func (h *campaignHandler) GetCampaign(c *gin.Context) {
 	var input campaign.GetCampaignDetailInput
 
