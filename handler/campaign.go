@@ -1,9 +1,9 @@
 package handler
 
 import (
-	"cfa-backend/auth"
 	"cfa-backend/campaign"
 	"cfa-backend/helper"
+	"cfa-backend/user"
 	"net/http"
 	"strconv"
 
@@ -12,7 +12,6 @@ import (
 
 type campaignHandler struct {
 	campaignService campaign.Service
-	authService     auth.Service
 }
 
 func NewCampaignHandler(campaignService campaign.Service) *campaignHandler {
@@ -84,5 +83,46 @@ func (h *campaignHandler) GetCampaign(c *gin.Context) {
 
 	campaignsDetailFormatter := campaign.FormatCampaignDetail(campaignDetail)
 	response := helper.APIResponse("Detail of campaign!", http.StatusOK, "success", campaignsDetailFormatter)
+	c.JSON(http.StatusOK, response)
+}
+
+// UploadAvatar godoc
+// @Summary      Create campaign
+// @Description  Create new campaign
+// @Tags         Campaigns
+// @Accept       json
+// @Produce      json
+// @Param        body  body  campaign.CreateCampaignInput  true  "Campaign create data"
+// @Success      200   {object}  helper.Response
+// @Failure      400   {object}  helper.Response
+// @Failure      422   {object}  helper.Response
+// @Router       /campaigns/:id [get]
+func (h *campaignHandler) CreateCampaign(c *gin.Context) {
+	var input campaign.CreateCampaignInput
+
+	err := c.ShouldBindJSON(&input)
+	if err != nil {
+		errors := helper.FormatValidationError(err)
+		errorMessage := gin.H{"errors": errors}
+
+		response := helper.APIResponse("Failed to create campaign!", http.StatusUnprocessableEntity, "error", errorMessage)
+		c.JSON(http.StatusUnprocessableEntity, response)
+		return
+	}
+
+	currentUser := c.MustGet("currentUser").(user.User)
+	input.User = currentUser
+
+	newCampaign, err := h.campaignService.CreateCampaign(input)
+	if err != nil {
+		errorMessage := gin.H{"errors": err.Error()}
+
+		response := helper.APIResponse("Failed to create campaign!", http.StatusBadRequest, "error", errorMessage)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	createCampaignFormatter := campaign.FormatCampaign(newCampaign)
+	response := helper.APIResponse("Campaign has been successfuly created!", http.StatusOK, "success", createCampaignFormatter)
 	c.JSON(http.StatusOK, response)
 }
