@@ -76,6 +76,7 @@ func main() {
 	api.GET("/campaigns", campaignHandler.GetCampaigns) //u can use query params such as ../../campaigns?user_id=...
 	api.GET("/campaign/:id", campaignHandler.GetCampaign)
 	api.POST("/campaigns", authMiddleware(authService, userService), campaignHandler.CreateCampaign)
+	api.PUT("/campaign/:id", authMiddleware(authService, userService), campaignHandler.UpdateCampaign)
 
 	router.Run()
 }

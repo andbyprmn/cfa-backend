@@ -1,6 +1,7 @@
 package campaign
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/gosimple/slug"
@@ -10,6 +11,7 @@ type Service interface {
 	GetCampaigns(userID int) ([]Campaign, error)
 	GetCampaignByID(input GetCampaignDetailInput) (Campaign, error)
 	CreateCampaign(input CreateCampaignInput) (Campaign, error)
+	UpdateCampaign(inputURI GetCampaignDetailInput, input CreateCampaignInput) (Campaign, error)
 }
 
 type service struct {
@@ -69,4 +71,29 @@ func (s *service) CreateCampaign(input CreateCampaignInput) (Campaign, error) {
 	}
 
 	return newCmmpaign, nil
+}
+
+func (s *service) UpdateCampaign(inputURI GetCampaignDetailInput, input CreateCampaignInput) (Campaign, error) {
+	campaign, err := s.repository.FindByID(inputURI.ID)
+
+	if err != nil {
+		return campaign, err
+	}
+
+	if campaign.UserID != input.User.ID {
+		return campaign, errors.New("You do not have authorization for change the campaign!")
+	}
+
+	campaign.Name = input.Name
+	campaign.ShortDescription = input.ShortDescription
+	campaign.Description = input.Description
+	campaign.Perks = input.Perks
+	campaign.GoalAmount = input.GoalAmount
+
+	updatedCampaign, err := s.repository.Update(campaign)
+	if err != nil {
+		return updatedCampaign, err
+	}
+
+	return updatedCampaign, nil
 }
