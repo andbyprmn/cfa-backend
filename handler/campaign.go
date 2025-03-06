@@ -4,6 +4,7 @@ import (
 	"cfa-backend/campaign"
 	"cfa-backend/helper"
 	"cfa-backend/user"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -18,7 +19,7 @@ func NewCampaignHandler(campaignService campaign.Service) *campaignHandler {
 	return &campaignHandler{campaignService: campaignService}
 }
 
-// UploadAvatar godoc
+// GetCampaigns godoc
 // @Summary      Get list of campaign
 // @Description  Get list of campaign by user id
 // @Tags         Campaigns
@@ -47,7 +48,7 @@ func (h *campaignHandler) GetCampaigns(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// UploadAvatar godoc
+// GetCampaign godoc
 // @Summary      Get detail of campaign
 // @Description  Get detail of campaign by campaign id
 // @Tags         Campaigns
@@ -86,7 +87,7 @@ func (h *campaignHandler) GetCampaign(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// UploadAvatar godoc
+// CreateCampaign godoc
 // @Summary      Create campaign
 // @Description  Create new campaign
 // @Tags         Campaigns
@@ -127,7 +128,7 @@ func (h *campaignHandler) CreateCampaign(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// UploadAvatar godoc
+// UpdateCampaign godoc
 // @Summary      Update Campaign
 // @Description  Update campaign by campaign id
 // @Tags         Campaigns
@@ -175,5 +176,67 @@ func (h *campaignHandler) UpdateCampaign(c *gin.Context) {
 
 	updatedCampaignFormatter := campaign.FormatCampaign(updatedCampaign)
 	response := helper.APIResponse("Campaign has been successfuly updated!", http.StatusOK, "success", updatedCampaignFormatter)
+	c.JSON(http.StatusOK, response)
+}
+
+// UploadImageCampaign godoc
+// @Summary      Upload campaign image
+// @Description  Upload a new campaign image for the user campaign
+// @Tags         Campaigns
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        file  formData  file  true  "Campaign image file"
+// @Success      200   {object}  helper.Response
+// @Failure      400   {object}  helper.Response
+// @Failure      422   {object}  helper.Response
+// @Router       /campaign-images [post]
+func (h *campaignHandler) UploadImage(c *gin.Context) {
+	var input campaign.CreateCampaignImageInput
+
+	err := c.ShouldBind(&input)
+	if err != nil {
+		errors := helper.FormatValidationError(err)
+		errorMessage := gin.H{"errors": errors}
+
+		response := helper.APIResponse("Failed to upload campaign image!", http.StatusUnprocessableEntity, "error", errorMessage)
+		c.JSON(http.StatusUnprocessableEntity, response)
+		return
+	}
+
+	file, err := c.FormFile("file")
+	if err != nil {
+		data := gin.H{"is_uploaded": false}
+		response := helper.APIResponse("Failed to upload campaign image!", http.StatusBadRequest, "error", data)
+
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	currentUser := c.MustGet("currentUser").(user.User)
+	userID := currentUser.ID
+	input.User = currentUser
+	path := fmt.Sprintf("images/%d-%s", userID, file.Filename)
+
+	err = c.SaveUploadedFile(file, path)
+	if err != nil {
+		data := gin.H{"is_uploaded": false}
+		response := helper.APIResponse("Failed to upload campaign image!", http.StatusBadRequest, "error", data)
+
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	_, err = h.campaignService.SaveCampaignImage(input, path)
+	if err != nil {
+		data := gin.H{"is_uploaded": false}
+		response := helper.APIResponse("Failed to upload campaign image!", http.StatusBadRequest, "error", data)
+
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	data := gin.H{"is_uploaded": true}
+	response := helper.APIResponse("Campaign image successfuly uploaded!", http.StatusOK, "error", data)
+
 	c.JSON(http.StatusOK, response)
 }

@@ -12,6 +12,7 @@ type Service interface {
 	GetCampaignByID(input GetCampaignDetailInput) (Campaign, error)
 	CreateCampaign(input CreateCampaignInput) (Campaign, error)
 	UpdateCampaign(inputURI GetCampaignDetailInput, input CreateCampaignInput) (Campaign, error)
+	SaveCampaignImage(input CreateCampaignImageInput, filePath string) (CampaignImage, error)
 }
 
 type service struct {
@@ -96,4 +97,38 @@ func (s *service) UpdateCampaign(inputURI GetCampaignDetailInput, input CreateCa
 	}
 
 	return updatedCampaign, nil
+}
+
+func (s *service) SaveCampaignImage(input CreateCampaignImageInput, filePath string) (CampaignImage, error) {
+	campaign, err := s.repository.FindByID(input.CampaignID)
+
+	if err != nil {
+		return CampaignImage{}, err
+	}
+
+	if campaign.UserID != input.User.ID {
+		return CampaignImage{}, errors.New("You do not have authorization for change the campaign!")
+	}
+
+	isPrimary := 0
+	if input.IsPrimary {
+		isPrimary = 1
+		_, err := s.repository.MarkAllImagesAsNonPrimary(input.CampaignID)
+		if err != nil {
+			return CampaignImage{}, err
+		}
+	}
+
+	campaignImage := CampaignImage{
+		CampaignID: input.CampaignID,
+		IsPrimary:  isPrimary,
+		FileName:   filePath,
+	}
+
+	newCampaignImage, err := s.repository.CreateImage(campaignImage)
+	if err != nil {
+		return newCampaignImage, err
+	}
+
+	return newCampaignImage, nil
 }

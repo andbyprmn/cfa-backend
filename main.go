@@ -6,7 +6,6 @@ import (
 	"cfa-backend/handler"
 	"cfa-backend/helper"
 	"cfa-backend/user"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -57,10 +56,6 @@ func main() {
 	userHandler := handler.NewUserHandler(userService, authService)
 	campaignHandler := handler.NewCampaignHandler(campaignService)
 
-	fmt.Println("===================================== START DEBUG =====================================")
-
-	fmt.Println("====================================== END DEBUG ======================================")
-
 	router := gin.Default()
 	router.Static("/images", "./images")
 	api := router.Group("/api/v1")
@@ -77,6 +72,7 @@ func main() {
 	api.GET("/campaign/:id", campaignHandler.GetCampaign)
 	api.POST("/campaigns", authMiddleware(authService, userService), campaignHandler.CreateCampaign)
 	api.PUT("/campaign/:id", authMiddleware(authService, userService), campaignHandler.UpdateCampaign)
+	api.POST("/campaign-images", authMiddleware(authService, userService), campaignHandler.UploadImage)
 
 	router.Run()
 }
