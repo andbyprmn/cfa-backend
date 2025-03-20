@@ -18,9 +18,9 @@ func NewTransactionHandler(transactionService transaction.Service) *transactionH
 }
 
 // GetTransaction godoc
-// @Summary      Get detail of transaction
-// @Description  Get detail of transaction by campaign id
-// @Tags         transactions
+// @Summary      Get list of campaign transactions
+// @Description  Get list of transactions by campaign id
+// @Tags         Transactions
 // @Accept       json
 // @Produce      json
 // @Param        id query int false "Campaign ID"
@@ -43,16 +43,45 @@ func (h *transactionHandler) GetCampaignTransactions(c *gin.Context) {
 		return
 	}
 
-	transactionDetail, err := h.transactionService.GetTransactionByID(input)
+	transactions, err := h.transactionService.GetTransactionByID(input)
 	if err != nil {
 		errorMessage := gin.H{"errors": err.Error()}
-		response := helper.APIResponse("Failed to get campaign transaction!", http.StatusBadRequest, "error", errorMessage)
+		response := helper.APIResponse("Failed to get campaign transactions!", http.StatusBadRequest, "error", errorMessage)
 
 		c.JSON(http.StatusBadRequest, response)
 		return
 	}
 
-	transactionsDetailFormatter := transaction.FormatCampaignTransactions(transactionDetail)
-	response := helper.APIResponse("List of campaign transactions!", http.StatusOK, "success", transactionsDetailFormatter)
+	transactionsFormatter := transaction.FormatCampaignTransactions(transactions)
+	response := helper.APIResponse("List of campaign transactions!", http.StatusOK, "success", transactionsFormatter)
 	c.JSON(http.StatusOK, response)
+}
+
+// GetTransaction godoc
+// @Summary      Get list of user transactions
+// @Description  Get list of transactions by user id
+// @Tags         Transactions
+// @Accept       json
+// @Produce      json
+// @Param        id query int false "User ID"
+// @Success      200   {object}  helper.Response
+// @Failure      400   {object}  helper.Response
+// @Failure      422   {object}  helper.Response
+// @Router       /user/:id/transactions [get]
+func (h *transactionHandler) GetUserTransactions(c *gin.Context) {
+	currentUser := c.MustGet("currentUser").(user.User)
+
+	transactions, err := h.transactionService.GetTransactionByUserID(currentUser.ID)
+	if err != nil {
+		errorMessage := gin.H{"errors": err.Error()}
+		response := helper.APIResponse("Failed to get user transactions!", http.StatusBadRequest, "error", errorMessage)
+
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	transactionsFormatter := transaction.FormatUserTransactions(transactions)
+	response := helper.APIResponse("List of user transactions!", http.StatusOK, "success", transactionsFormatter)
+	c.JSON(http.StatusOK, response)
+
 }
